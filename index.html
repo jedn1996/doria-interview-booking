@@ -380,7 +380,7 @@
             }
         };
 
-       // Función para cargar dinámicamente los horarios ocupados desde Google Sheets
+// Función para cargar dinámicamente los horarios ocupados desde Google Sheets
 async function syncBookedSlotsFromSheets() {
     try {
         const res = await fetch(GOOGLE_SCRIPT_URL);
@@ -392,10 +392,21 @@ async function syncBookedSlotsFromSheets() {
                 let cleanDate = String(slot.date).trim();
                 let cleanTime = String(slot.time).trim();
 
+                // Normalizar la fecha por si viene con formato T de ISO
+                if (cleanDate.includes("T")) {
+                    cleanDate = cleanDate.split("T")[0];
+                }
+
+                // Normalizar la hora por si viene sin cero inicial (ej. "9:00" -> "09:00")
+                if (cleanTime.length === 4 && cleanTime.includes(":")) {
+                    cleanTime = "0" + cleanTime;
+                }
+
                 if (scheduleDatabase[cleanDate] && scheduleDatabase[cleanDate][cleanTime]) {
                     scheduleDatabase[cleanDate][cleanTime].booked = true;
                 }
             });
+            // Volver a renderizar las horas para reflejar los bloqueos
             renderTimeSlots();
         }
     } catch (err) {
@@ -569,17 +580,19 @@ async function syncBookedSlotsFromSheets() {
             sidebarDesc.textContent = "Please provide your contact information to begin the scheduling process for the doctoral research interview.";
         };
 
-        btnToStep3.onclick = () => {
-            step2.classList.add('hidden');
-            step3.classList.remove('hidden');
-            stepNum.textContent = "3";
-            stepTitle.textContent = "Select Date & Time";
-            stepSub.textContent = "Step 3 of 3";
-            sidebarStepTag.textContent = "Step 3";
-            sidebarTitle.textContent = "Session Scheduling";
-            sidebarDesc.textContent = "Choose your preferred date and available 30-minute time slot for the virtual interview via Microsoft Teams.";
-            syncBookedSlotsFromSheets(); // Resincronizar antes de mostrar horarios
-        };
+btnToStep3.onclick = async () => {
+    step2.classList.add('hidden');
+    step3.classList.remove('hidden');
+    stepNum.textContent = "3";
+    stepTitle.textContent = "Select Date & Time";
+    stepSub.textContent = "Step 3 of 3";
+    sidebarStepTag.textContent = "Step 3";
+    sidebarTitle.textContent = "Session Scheduling";
+    sidebarDesc.textContent = "Choose your preferred date and available 30-minute time slot for the virtual interview via Microsoft Teams.";
+    
+    // Sincronizar y renderizar las horas ocupadas al entrar a este paso
+    await syncBookedSlotsFromSheets();
+};
 
         btnBackStep2.onclick = () => {
             step3.classList.add('hidden');
