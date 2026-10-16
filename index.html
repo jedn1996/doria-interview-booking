@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctoral Research Interview Booking System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <!-- Librería para capturar y descargar la carta como imagen -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col antialiased selection:bg-blue-500 selection:text-white">
+
+    <!-- Header -->
+    <header class="border-b border-slate-200 bg-white/90 backdrop-blur-md sticky top-0 z-50 shadow-sm">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600">
+                    <i data-lucide="graduation-cap" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h1 class="text-sm font-bold text-slate-900 tracking-tight">Doctoral Research Study</h1>
+                    <p class="text-[11px] text-slate-500">MIE. Jesús Doria</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    Schedule Open
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 sm:py-12 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        
+        <!-- Sidebar Information -->
+        <aside class="lg:col-span-4 bg-white border border-slate-200 rounded-2xl p-6 space-y-6 shadow-sm">
+            <div>
+                <span id="sidebar-step-tag" class="text-xs font-bold uppercase tracking-wider text-blue-600">Step 1</span>
+                <h2 id="sidebar-title" class="text-xl font-extrabold text-slate-900 mt-1">Participant Registration</h2>
+                <p id="sidebar-desc" class="text-xs text-slate-600 mt-2 leading-relaxed">
+                    Please provide your contact information to begin the scheduling process for the doctoral research interview.
+                </p>
+            </div>
+        </aside>
+
+        <!-- Main Card Area -->
+        <div class="lg:col-span-8 bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm relative overflow-hidden">
+            
+            <!-- Step Indicator -->
+            <div class="flex items-center justify-between mb-8 border-b border-slate-100 pb-4">
+                <div class="flex items-center gap-3">
+                    <span id="step-num" class="w-8 h-8 rounded-xl bg-blue-600 text-white font-bold text-xs flex items-center justify-center shadow-md shadow-blue-500/20">1</span>
+                    <div>
+                        <span id="step-title" class="text-sm font-bold text-slate-900 block">Participant Details</span>
+                        <span id="step-sub" class="text-[11px] text-slate-500">Step 1 of 3</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 1: Participant Information Form -->
+            <div id="step-1" class="space-y-6">
+                <form id="info-form" class="space-y-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1.5">Full Name *</label>
+                            <input type="text" id="user-name" required placeholder="e.g. Dr. John Doe" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-700 mb-1.5">Institutional Email *</label>
+                            <input type="email" id="user-email" required placeholder="name@university.edu" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-slate-700 mb-1.5">Phone / WhatsApp *</label>
+                        <input type="tel" id="user-phone" required placeholder="+1 (555) 000-0000" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-slate-700 mb-1.5">Area of Expertise / Additional Notes (Optional)</label>
+                        <textarea id="user-notes" rows="3" placeholder="Brief description or field of knowledge relevant to the interview..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition"></textarea>
+                    </div>
+
+                    <div class="pt-4 border-t border-slate-100 flex justify-end">
+                        <button type="button" id="btn-to-step2" disabled class="px-6 py-3 rounded-xl text-xs font-semibold bg-slate-100 text-slate-400 cursor-not-allowed transition flex items-center gap-2">
+                            <span>Continue</span>
+                            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- STEP 2: Academic Research Details & Information -->
+            <div id="step-2" class="space-y-6 hidden">
+                <div class="space-y-4 bg-slate-50 border border-slate-200 rounded-xl p-5">
+                    <div>
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-blue-600 bg-blue-100/60 px-2.5 py-1 rounded-md">Academic Research</span>
+                        <h3 class="text-base font-bold text-slate-900 mt-2">Study Overview & Session Details</h3>
+                        <p class="text-xs text-slate-600 mt-1 leading-relaxed">
+                            Dear participant, thank you for participating in this doctoral research study. Please review the study specifications below before proceeding to schedule your time slot.
+                        </p>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+                        <div class="p-3 bg-white border border-slate-200 rounded-lg flex items-center gap-2 text-xs font-medium text-slate-700">
+                            <i data-lucide="clock" class="w-4 h-4 text-blue-600 shrink-0"></i>
+                            <span>Duration: <strong>30 Minutes</strong></span>
+                        </div>
+                        <div class="p-3 bg-white border border-slate-200 rounded-lg flex items-center gap-2 text-xs font-medium text-slate-700">
+                            <i data-lucide="video" class="w-4 h-4 text-blue-600 shrink-0"></i>
+                            <span>Platform: <strong>Microsoft Teams</strong></span>
+                        </div>
+                        <div class="p-3 bg-white border border-slate-200 rounded-lg flex items-center gap-2 text-xs font-medium text-slate-700">
+                            <i data-lucide="user-check" class="w-4 h-4 text-blue-600 shrink-0"></i>
+                            <span>Researcher: <strong>MIE. Jesús Doria</strong></span>
+                        </div>
+                    </div>
+
+                    <div class="p-4 rounded-xl bg-white border border-slate-200 space-y-1.5">
+                        <div class="flex items-center gap-2 text-blue-700 text-xs font-semibold">
+                            <i data-lucide="shield-check" class="w-4 h-4"></i>
+                            <span>Confidentiality Statement</span>
+                        </div>
+                        <p class="text-[11px] text-slate-500 leading-relaxed">
+                            All shared information will be handled with strict academic confidentiality solely for the purposes of this doctoral study.
+                        </p>
+                    </div>
+
+                    <!-- Invitation Download Option -->
+                    <div class="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-blue-50/50 border border-blue-100 rounded-xl p-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-lg bg-blue-600 text-white flex items-center justify-center shrink-0">
+                                <i data-lucide="file-text" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-xs font-bold text-slate-900">Formal Invitation Letter</h4>
+                                <p class="text-[11px] text-slate-500">Download official documentation as image</p>
+                            </div>
+                        </div>
+                        <button type="button" id="btn-download-invitation" class="px-4 py-2.5 rounded-lg bg-white border border-blue-200 text-blue-700 hover:bg-blue-50 text-xs font-semibold transition flex items-center justify-center gap-2 shadow-sm cursor-pointer">
+                            <i data-lucide="download" class="w-4 h-4"></i>
+                            <span>Download Letter Image</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="pt-4 border-t border-slate-100 flex items-center justify-between">
+                    <button type="button" id="btn-back-step1" class="px-5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium text-slate-600 hover:bg-slate-50 transition flex items-center gap-2 cursor-pointer">
+                        <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                        <span>Back</span>
+                    </button>
+                    <button type="button" id="btn-to-step3" class="px-6 py-2.5 rounded-xl text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/20 transition flex items-center gap-2 cursor-pointer">
+                        <span>Proceed to Schedule</span>
+                        <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- STEP 3: Schedule Interview (Date & Time Picker) -->
+            <div id="step-3" class="space-y-6 hidden">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">1. Select Date</label>
+                        <select id="booking-date" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition cursor-pointer">
+                            <option value="" disabled selected>-- Select a date --</option>
+                            <option value="2026-10-16">Friday, October 16</option>
+                            <option value="2026-10-17">Saturday, October 17</option>
+                            <option value="2026-10-19">Monday, October 19</option>
+                            <option value="2026-10-20">Tuesday, October 20</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">2. Available Slots (30 min)</label>
+                        <div id="time-slots" class="grid grid-cols-2 gap-2 max-h-[260px] overflow-y-auto pr-1">
+                            <p class="col-span-2 text-xs text-slate-500 italic p-3 text-center bg-slate-50 rounded-xl border border-slate-200">
+                                Please select a date first.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-4 border-t border-slate-100 flex items-center justify-between">
+                    <button type="button" id="btn-back-step2" class="px-5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium text-slate-600 hover:bg-slate-50 transition flex items-center gap-2 cursor-pointer">
+                        <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                        <span>Back</span>
+                    </button>
+                    <button type="button" id="btn-submit" disabled class="px-6 py-2.5 rounded-xl text-xs font-semibold bg-slate-100 text-slate-400 cursor-not-allowed transition flex items-center gap-2">
+                        <span>Confirm & Schedule</span>
+                        <i data-lucide="check-circle" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- STEP 4: Confirmation Screen -->
+            <div id="step-4" class="space-y-6 text-center hidden py-4">
+                <div class="w-16 h-16 bg-emerald-100 border border-emerald-300 text-emerald-600 rounded-full flex items-center justify-center mx-auto shadow-sm">
+                    <i data-lucide="check" class="w-8 h-8"></i>
+                </div>
+
+                <div>
+                    <h3 class="text-xl font-bold text-slate-900">Session Successfully Scheduled!</h3>
+                    <p class="text-xs text-slate-500 mt-1">Your appointment for the doctoral research interview has been recorded.</p>
+                </div>
+
+                <div class="bg-slate-50 border border-slate-200 rounded-xl p-5 text-left text-xs space-y-3 max-w-md mx-auto shadow-sm">
+                    <div class="flex justify-between border-b border-slate-200/80 pb-2">
+                        <span class="text-slate-500">Date & Time:</span>
+                        <span id="summary-datetime" class="text-blue-700 font-bold"></span>
+                    </div>
+                    <div class="flex justify-between border-b border-slate-200/80 pb-2">
+                        <span class="text-slate-500">Participant:</span>
+                        <span id="summary-name" class="text-slate-800 font-medium"></span>
+                    </div>
+                    <div class="flex justify-between border-b border-slate-200/80 pb-2">
+                        <span class="text-slate-500">Institutional Email:</span>
+                        <span id="summary-email" class="text-slate-800 font-medium"></span>
+                    </div>
+                    <div class="flex justify-between border-b border-slate-200/80 pb-2">
+                        <span class="text-slate-500">Phone:</span>
+                        <span id="summary-phone" class="text-slate-800 font-medium"></span>
+                    </div>
+                    
+                    <div class="pt-2 space-y-2">
+                        <div class="flex items-center gap-2 text-blue-700 font-bold text-[11px] uppercase tracking-wider">
+                            <i data-lucide="video" class="w-3.5 h-3.5"></i>
+                            <span>Microsoft Teams Access</span>
+                        </div>
+                        <p class="text-slate-600"><strong class="text-slate-800">Meeting ID:</strong> <span id="summary-meeting-id" class="text-slate-800 font-mono"></span></p>
+                        <p class="text-slate-600"><strong class="text-slate-800">Passcode:</strong> <span id="summary-passcode" class="text-slate-800 font-mono"></span></p>
+                        <div class="pt-2">
+                            <a id="summary-link" href="#" target="_blank" class="block w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-center text-xs transition shadow-md shadow-blue-500/20">
+                                Join Teams Meeting &rarr;
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-center pt-2">
+                    <button id="btn-reset" class="px-6 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition cursor-pointer">
+                        Schedule Another Session
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Hidden Template for Image Generation -->
+    <div id="invitation-template-container" style="position: absolute; left: -9999px; top: -9999px;">
+        <div id="invitation-card" style="width: 800px; background-color: #ffffff; padding: 50px; font-family: 'Plus Jakarta Sans', sans-serif; color: #1e293b; border: 1px solid #e2e8f0; box-sizing: border-box;">
+            <div style="border-bottom: 2px solid #2563eb; padding-bottom: 20px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h2 style="margin: 0; font-size: 18px; font-weight: 800; color: #1e293b; text-transform: uppercase; letter-spacing: 0.5px;">Universidad Autónoma de Nuevo León</h2>
+                    <p style="margin: 4px 0 0 0; font-size: 13px; font-weight: 600; color: #475569;">School of Philosophy and Arts — Doctoral Program in Educational Innovation</p>
+                </div>
+            </div>
+
+            <h1 style="margin: 0 0 20px 0; font-size: 20px; font-weight: 700; color: #1e3a8a; text-align: center;">Invitation to Participate in a Semi-Structured Interview</h1>
+            
+            <p style="margin: 0 0 15px 0; font-size: 14px; line-height: 1.6;">Dear <strong id="inv-participant-name" style="color: #2563eb;">Participant</strong>,</p>
+            
+            <p style="margin: 0 0 15px 0; font-size: 13px; line-height: 1.6; text-align: justify;">
+                I hope this email finds you well. I am writing to cordially invite you to participate in a semi-structured interview as part of the doctoral research project titled <strong>“Micro-credentials to Enhance Pedagogical Competence for Pre-service English Teachers of a Public University in Northern Mexico”</strong>, conducted through the School of Philosophy and Arts at the Universidad Autónoma de Nuevo León.
+            </p>
+
+            <p style="margin: 0 0 15px 0; font-size: 13px; line-height: 1.6; text-align: justify;">
+                The purpose of this interview is to gain in-depth insights into the perceptions of 10th-semester students in the Applied Linguistics Program (Licenciatura en Lingüística Aplicada a la Enseñanza y Traducción del Inglés) regarding pedagogical, linguistic, and intercultural competencies.
+            </p>
+
+            <div style="background-color: #f8fafc; border-left: 4px solid #2563eb; padding: 15px; margin: 20px 0; border-radius: 0 8px 8px 0;">
+                <p style="margin: 0 0 8px 0; font-size: 13px; font-weight: 700; color: #1e293b;">Participation Details:</p>
+                <ul style="margin: 0; padding-left: 20px; font-size: 12px; line-height: 1.5; color: #475569;">
+                    <li><strong>Format:</strong> Online one-on-one semi-structured interview.</li>
+                    <li><strong>Estimated Duration:</strong> Approximately 30 minutes.</li>
+                    <li><strong>Voluntary Nature:</strong> Completely voluntary. You may choose not to answer specific questions or withdraw at any time without penalty.</li>
+                </ul>
+            </div>
+
+            <div style="background-color: #f8fafc; border-left: 4px solid #059669; padding: 15px; margin: 20px 0; border-radius: 0 8px 8px 0;">
+                <p style="margin: 0 0 8px 0; font-size: 13px; font-weight: 700; color: #1e293b;">Confidentiality and Ethical Standards:</p>
+                <ul style="margin: 0; padding-left: 20px; font-size: 12px; line-height: 1.5; color: #475569;">
+                    <li>All records will be kept strictly confidential and anonymized using pseudonyms or numerical identifiers.</li>
+                    <li>Data will be stored securely in encrypted, password-protected files accessible only to the research team.</li>
+                    <li>Participation poses no more risk than those encountered in daily life.</li>
+                </ul>
+            </div>
+
+            <p style="margin: 0 0 25px 0; font-size: 13px; line-height: 1.6; text-align: justify;">
+                Thank you in advance for considering this invitation and for your valuable contribution to this research project. Please select your time slot through our official booking portal.
+            </p>
+
+            <p style="margin: 0 0 35px 0; font-size: 13px; color: #475569;">Respectfully,</p>
+
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 20px; border-top: 1px solid #e2e8f0; padding-top: 20px;">
+                <div>
+                    <p style="margin: 0; font-size: 13px; font-weight: 700; color: #1e293b;">MIE. Jesús Eduardo Doria Navarro</p>
+                    <p style="margin: 2px 0 0 0; font-size: 11px; color: #64748b;">Doctoral Candidate</p>
+                </div>
+                <div style="text-align: right;">
+                    <p style="margin: 0; font-size: 13px; font-weight: 700; color: #1e293b;">Dr. Andrés Sepúlveda Rodríguez</p>
+                    <p style="margin: 2px 0 0 0; font-size: 11px; color: #64748b;">Thesis Advisor</p>
+                </div>
+            </div>
+
+            <div style="margin-top: 30px; text-align: center; font-size: 11px; color: #94a3b8; border-top: 1px dashed #cbd5e1; pt-3;">
+                Ciudad Universitaria, Nuevo León, Mexico; <span id="inv-current-date">October 9th 2026</span>
+            </div>
+        </div>
+    </div>
+
+    <footer class="border-t border-slate-200 bg-white py-6 text-center text-xs text-slate-500">
+        <p>© 2026 Doctoral Research Interview System — MIE. Jesús Doria</p>
+    </footer>
+
+    <script>
+        // =========================================================================
+        // CONFIGURACIÓN INTERNA DE EMAILJS
+        // =========================================================================
+        const EMAILJS_CONFIG = {
+            serviceId: "service_qyyrh2d",
+            templateId: "template_lp7gpwd",
+            publicKey: "irdDsSHpdmWgm-PXi"
+        };
+
+        // Master Schedule Database & LocalStorage Synchronization
+        const scheduleDatabase = JSON.parse(localStorage.getItem('doctoral_schedule_db')) || {
+            "2026-10-16": {
+                "13:00": { link: "https://teams.microsoft.com/meet/26144021982176?p=3iFy8QQ1kdzgPVuSGG", id: "261 440 219 821 76", pass: "r4n9Cf6Z", booked: false },
+                "13:30": { link: "https://teams.microsoft.com/meet/232316968406680?p=yMgytNZOss2C18yl1d", id: "232 316 968 406 680", pass: "Rh79wm3p", booked: false },
+                "14:00": { link: "https://teams.microsoft.com/meet/2560500616129612?p=ewe1AA3ACZD5ZSjEP7", id: "256 050 061 612 961 2", pass: "HX6Cz63Z", booked: false },
+                "14:30": { link: "https://teams.microsoft.com/meet/2110884791661769?p=RyWeudx0RILykpzbss", id: "211 088 479 166 176 9", pass: "QJ7jq6C6", booked: false },
+                "15:00": { link: "https://teams.microsoft.com/meet/237134235029811?p=lg9sSItmm3rHNaLWzX", id: "237 134 235 029 811", pass: "Mp9GJ6TY", booked: false },
+                "15:30": { link: "https://teams.microsoft.com/meet/289867088959342?p=4xTgbs9xh0r1Ca0Esv", id: "289 867 088 959 342", pass: "Mv2kX6S5", booked: false },
+                "16:00": { link: "https://teams.microsoft.com/meet/2301554647018799?p=Q4T63Y9YVW6kISkPjl", id: "230 155 464 701 879 9", pass: "xh7iF9uJ", booked: false },
+                "16:30": { link: "https://teams.microsoft.com/meet/260265729158121?p=sfFMeKUaSzcyJzevrq", id: "260 265 729 158 121", pass: "Db78bA6A", booked: false }
+            },
+            "2026-10-17": {
+                "09:00": { link: "https://teams.microsoft.com/meet/252484627497154?p=4lHPUrFxWplkVuOVm2", id: "252 484 627 497 154", pass: "Vx6K9uB9", booked: false },
+                "09:30": { link: "https://teams.microsoft.com/meet/2925982640335590?p=uLSb6XvVkLKeGvfbGd", id: "292 598 264 033 559 0", pass: "B4hS3VU7", booked: false },
+                "10:00": { link: "https://teams.microsoft.com/meet/2116557169750608?p=zUDpo6JdDfsdnwzIto", id: "211 655 716 975 060 8", pass: "rX9iC7hB", booked: false },
+                "10:30": { link: "https://teams.microsoft.com/meet/2727468632791437?p=943qSqDeToqTDGyz6h", id: "272 746 863 279 143 7", pass: "9aG66YW6", booked: false },
+                "11:00": { link: "https://teams.microsoft.com/meet/2886579464002688?p=simUYbAgxT5rqNemki", id: "288 657 946 400 268 8", pass: "P6XJ2t8D", booked: false }
+            },
+            "2026-10-19": {
+                "11:00": { link: "https://teams.microsoft.com/meet/275122288873979?p=hjT31P2odIYm3ZdIn0", id: "275 122 288 873 979", pass: "mP6Qw7A6", booked: false },
+                "11:30": { link: "https://teams.microsoft.com/meet/255127426856450?p=8dS2LM9A8RLXfGb6U4", id: "255 127 426 856 450", pass: "W9rK7CA6", booked: false },
+                "12:00": { link: "https://teams.microsoft.com/meet/2520118708720154?p=19CGQi8qy1pFD3IWoH", id: "252 011 870 872 015 4", pass: "AR9UQ9Bg", booked: false },
+                "12:30": { link: "https://teams.microsoft.com/meet/282311658190879?p=YT9gRuKbHhZP4lxSzE", id: "282 311 658 190 879", pass: "5Uz6hi3h", booked: false },
+                "13:00": { link: "https://teams.microsoft.com/meet/2518539390484698?p=AWxy3Dvqjat6QUpUqx", id: "251 853 939 048 469 8", pass: "uY9Dz6t2", booked: false },
+                "13:30": { link: "https://teams.microsoft.com/meet/218077212181989?p=gnPbH2zHTColH7LRO3", id: "218 077 212 181 989", pass: "VN22Sm9g", booked: false },
+                "14:00": { link: "https://teams.microsoft.com/meet/2871598095311347?p=Aqspd5L3LtXg1ybxUn", id: "287 159 809 531 134 7", pass: "G97B23uJ", booked: false },
+                "14:30": { link: "https://teams.microsoft.com/meet/238851745677996?p=ygakmp7gaTtvIyVaa5", id: "238 851 745 677 996", pass: "eU658vm2", booked: false }
+            },
+            "2026-10-20": {
+                "19:00": { link: "https://teams.microsoft.com/meet/239542701022725?p=OTHW9PDiAuzOpAAk9J", id: "239 542 701 022 725", pass: "xB9DN3JF", booked: false },
+                "19:30": { link: "https://teams.microsoft.com/meet/2582069854090614?p=MmKKEPxEdnn9btBxp4", id: "258 206 985 409 061 4", pass: "hx22DN6N", booked: false },
+                "20:00": { link: "https://teams.microsoft.com/meet/2923673438858454?p=5bOJhciJq6xHoCFR2V", id: "292 367 343 885 845 4", pass: "uf6Vz2Vg", booked: false },
+                "20:30": { link: "https://teams.microsoft.com/meet/233211309709428?p=7jFXGuwJpPMLPN924b", id: "233 211 309 709 428", pass: "EN9xA7wq", booked: false }
+            }
+        };
+
+        let selectedDate = "";
+        let selectedTime = "";
+        let selectedMeetingInfo = null;
+
+        const userNameInput = document.getElementById('user-name');
+        const userEmailInput = document.getElementById('user-email');
+        const userPhoneInput = document.getElementById('user-phone');
+        
+        const btnToStep2 = document.getElementById('btn-to-step2');
+        const btnBackStep1 = document.getElementById('btn-back-step1');
+        const btnToStep3 = document.getElementById('btn-to-step3');
+        const btnBackStep2 = document.getElementById('btn-back-step2');
+        const btnDownloadInv = document.getElementById('btn-download-invitation');
+        
+        const dateInput = document.getElementById('booking-date');
+        const timeSlotsContainer = document.getElementById('time-slots');
+        const btnSubmit = document.getElementById('btn-submit');
+        const btnReset = document.getElementById('btn-reset');
+
+        const step1 = document.getElementById('step-1');
+        const step2 = document.getElementById('step-2');
+        const step3 = document.getElementById('step-3');
+        const step4 = document.getElementById('step-4');
+        
+        const stepNum = document.getElementById('step-num');
+        const stepTitle = document.getElementById('step-title');
+        const stepSub = document.getElementById('step-sub');
+        
+        const sidebarStepTag = document.getElementById('sidebar-step-tag');
+        const sidebarTitle = document.getElementById('sidebar-title');
+        const sidebarDesc = document.getElementById('sidebar-desc');
+
+        lucide.createIcons();
+
+        function validateStep1Form() {
+            const isNameValid = userNameInput.value.trim().length > 0;
+            const isEmailValid = userEmailInput.value.trim().length > 3 && userEmailInput.value.includes('@');
+            const isPhoneValid = userPhoneInput.value.trim().length > 5;
+
+            if (isNameValid && isEmailValid && isPhoneValid) {
+                btnToStep2.disabled = false;
+                btnToStep2.className = "px-6 py-3 rounded-xl text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/20 transition flex items-center gap-2 cursor-pointer";
+            } else {
+                btnToStep2.disabled = true;
+                btnToStep2.className = "px-6 py-3 rounded-xl text-xs font-semibold bg-slate-100 text-slate-400 cursor-not-allowed transition flex items-center gap-2";
+            }
+        }
+
+        userNameInput.addEventListener('input', validateStep1Form);
+        userEmailInput.addEventListener('input', validateStep1Form);
+        userPhoneInput.addEventListener('input', validateStep1Form);
+
+        // Generar y descargar la carta de invitación como Imagen con fecha dinámica
+        btnDownloadInv.onclick = () => {
+            const nameVal = userNameInput.value.trim() || "Participant";
+            document.getElementById('inv-participant-name').textContent = nameVal;
+
+            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            const todayStr = new Date().toLocaleDateString('en-US', options);
+            document.getElementById('inv-current-date').textContent = todayStr;
+
+            const card = document.getElementById('invitation-card');
+            
+            btnDownloadInv.disabled = true;
+            btnDownloadInv.innerHTML = `<i data-lucide="loader" class="w-4 h-4 animate-spin"></i><span>Generating Image...</span>`;
+            lucide.createIcons();
+
+            html2canvas(card, { scale: 2, useCORS: true }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `Invitation_Letter_${nameVal.replace(/\s+/g, '_')}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+
+                btnDownloadInv.disabled = false;
+                btnDownloadInv.innerHTML = `<i data-lucide="download" class="w-4 h-4"></i><span>Download Letter Image</span>`;
+                lucide.createIcons();
+            }).catch(err => {
+                console.error("Error generating image:", err);
+                btnDownloadInv.disabled = false;
+                btnDownloadInv.innerHTML = `<i data-lucide="download" class="w-4 h-4"></i><span>Download Letter Image</span>`;
+                lucide.createIcons();
+            });
+        };
+
+        function renderTimeSlots() {
+            timeSlotsContainer.innerHTML = "";
+            
+            if (!selectedDate || !scheduleDatabase[selectedDate]) {
+                timeSlotsContainer.innerHTML = `<p class="col-span-2 text-xs text-slate-500 italic p-3 text-center bg-slate-50 rounded-xl border border-slate-200">Please select a date first.</p>`;
+                return;
+            }
+
+            const availableSlots = Object.keys(scheduleDatabase[selectedDate]);
+            availableSlots.forEach(time => {
+                const slotData = scheduleDatabase[selectedDate][time];
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                const isSelected = selectedTime === time;
+
+                if (slotData.booked) {
+                    btn.disabled = true;
+                    btn.className = "p-3 rounded-xl border border-slate-200 bg-slate-100 text-slate-400 text-xs font-semibold text-center flex items-center justify-center gap-2 cursor-not-allowed line-through opacity-60";
+                    btn.innerHTML = `<i data-lucide="lock" class="w-3.5 h-3.5 text-slate-400"></i> ${time} hrs (Booked)`;
+                } else {
+                    btn.className = `p-3 rounded-xl border text-xs font-semibold transition text-center flex items-center justify-center gap-2 cursor-pointer ${
+                        isSelected 
+                        ? 'border-blue-600 bg-blue-50 text-blue-700 shadow-sm ring-1 ring-blue-600' 
+                        : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50'
+                    }`;
+                    btn.innerHTML = `<i data-lucide="clock" class="w-3.5 h-3.5"></i> ${time} hrs`;
+                    btn.onclick = () => {
+                        selectedTime = time;
+                        selectedMeetingInfo = slotData;
+                        renderTimeSlots();
+                        validateStep3();
+                    };
+                }
+                timeSlotsContainer.appendChild(btn);
+            });
+            lucide.createIcons();
+        }
+
+        dateInput.addEventListener('change', (e) => {
+            selectedDate = e.target.value;
+            selectedTime = "";
+            selectedMeetingInfo = null;
+            renderTimeSlots();
+            validateStep3();
+        });
+
+        function validateStep3() {
+            if (selectedDate && selectedTime && selectedMeetingInfo && !selectedMeetingInfo.booked) {
+                btnSubmit.disabled = false;
+                btnSubmit.className = "px-6 py-2.5 rounded-xl text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/20 transition flex items-center gap-2 cursor-pointer";
+            } else {
+                btnSubmit.disabled = true;
+                btnSubmit.className = "px-6 py-2.5 rounded-xl text-xs font-semibold bg-slate-100 text-slate-400 cursor-not-allowed transition flex items-center gap-2";
+            }
+        }
+
+        // Navigation Handlers
+        btnToStep2.onclick = () => {
+            step1.classList.add('hidden');
+            step2.classList.remove('hidden');
+            stepNum.textContent = "2";
+            stepTitle.textContent = "Study Information";
+            stepSub.textContent = "Step 2 of 3";
+            sidebarStepTag.textContent = "Step 2";
+            sidebarTitle.textContent = "Study Overview";
+            sidebarDesc.textContent = "Review research specifications, ethical standards, and download your formal invitation letter.";
+        };
+
+        btnBackStep1.onclick = () => {
+            step2.classList.add('hidden');
+            step1.classList.remove('hidden');
+            stepNum.textContent = "1";
+            stepTitle.textContent = "Participant Details";
+            stepSub.textContent = "Step 1 of 3";
+            sidebarStepTag.textContent = "Step 1";
+            sidebarTitle.textContent = "Participant Registration";
+            sidebarDesc.textContent = "Please provide your contact information to begin the scheduling process for the doctoral research interview.";
+        };
+
+        btnToStep3.onclick = () => {
+            step2.classList.add('hidden');
+            step3.classList.remove('hidden');
+            stepNum.textContent = "3";
+            stepTitle.textContent = "Select Date & Time";
+            stepSub.textContent = "Step 3 of 3";
+            sidebarStepTag.textContent = "Step 3";
+            sidebarTitle.textContent = "Session Scheduling";
+            sidebarDesc.textContent = "Choose your preferred date and available 30-minute time slot for the virtual interview via Microsoft Teams.";
+        };
+
+        btnBackStep2.onclick = () => {
+            step3.classList.add('hidden');
+            step2.classList.remove('hidden');
+            stepNum.textContent = "2";
+            stepTitle.textContent = "Study Information";
+            stepSub.textContent = "Step 2 of 3";
+            sidebarStepTag.textContent = "Step 2";
+            sidebarTitle.textContent = "Study Overview";
+            sidebarDesc.textContent = "Review research specifications, ethical standards, and download your formal invitation letter.";
+        };
+
+        // Submit Booking & Send Email Notification via EmailJS
+        btnSubmit.onclick = async () => {
+            if (!selectedDate || !selectedTime || !selectedMeetingInfo) return;
+
+            btnSubmit.disabled = true;
+            btnSubmit.innerHTML = `<span>Processing Booking...</span>`;
+
+            // Mark slot as booked in database and save to localStorage
+            scheduleDatabase[selectedDate][selectedTime].booked = true;
+            localStorage.setItem('doctoral_schedule_db', JSON.stringify(scheduleDatabase));
+
+            const payload = {
+                participant_name: userNameInput.value.trim(),
+                participant_email: userEmailInput.value.trim(),
+                participant_phone: userPhoneInput.value.trim(),
+                booking_date: selectedDate,
+                booking_time: selectedTime,
+                meeting_link: selectedMeetingInfo.link,
+                meeting_id: selectedMeetingInfo.id,
+                passcode: selectedMeetingInfo.pass,
+                notes: document.getElementById('user-notes').value.trim() || "No notes provided"
+            };
+
+            // Envío de correos vía EmailJS
+            try {
+                emailjs.init(EMAILJS_CONFIG.publicKey);
+                await emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, payload);
+                console.log("Email sent successfully via EmailJS.");
+            } catch (err) {
+                console.warn("EmailJS sending error:", err);
+            }
+
+            // Fill summary modal
+            document.getElementById('summary-datetime').textContent = `${selectedDate} at ${selectedTime} hrs`;
+            document.getElementById('summary-name').textContent = payload.participant_name;
+            document.getElementById('summary-email').textContent = payload.participant_email;
+            document.getElementById('summary-phone').textContent = payload.participant_phone;
+            document.getElementById('summary-meeting-id').textContent = payload.meeting_id;
+            document.getElementById('summary-passcode').textContent = payload.passcode;
+            document.getElementById('summary-link').href = payload.meeting_link;
+
+            step3.classList.add('hidden');
+            step4.classList.remove('hidden');
+            stepNum.textContent = "✓";
+            stepTitle.textContent = "Booking Confirmed";
+            stepSub.textContent = "Complete";
+            sidebarStepTag.textContent = "Complete";
+            sidebarTitle.textContent = "Session Confirmed";
+            sidebarDesc.textContent = "Your interview session has been registered successfully. Access credentials have been sent to your email.";
+        };
+
+        btnReset.onclick = () => {
+            location.reload();
+        };
+    </script>
+</body>
+</html>
