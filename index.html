@@ -333,16 +333,18 @@
 
     <script>
         // =========================================================================
-        // CONFIGURACIÓN INTERNA DE EMAILJS
+        // CONFIGURACIÓN DE APIS (GOOGLE SHEETS & EMAILJS)
         // =========================================================================
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzUFtA4FbEDjh3MX75dPuG5X-ALxkuKBaRDTH6PKRev5XueRGszV8OsgqKE-WoBWM2b_A/exec";
+
         const EMAILJS_CONFIG = {
             serviceId: "service_qyyrh2d",
             templateId: "template_lp7gpwd",
             publicKey: "irdDsSHpdmWgm-PXi"
         };
 
-        // Master Schedule Database & LocalStorage Synchronization
-        const scheduleDatabase = JSON.parse(localStorage.getItem('doctoral_schedule_db')) || {
+        // Master Schedule Database
+        const scheduleDatabase = {
             "2026-10-16": {
                 "13:00": { link: "https://teams.microsoft.com/meet/26144021982176?p=3iFy8QQ1kdzgPVuSGG", id: "261 440 219 821 76", pass: "r4n9Cf6Z", booked: false },
                 "13:30": { link: "https://teams.microsoft.com/meet/232316968406680?p=yMgytNZOss2C18yl1d", id: "232 316 968 406 680", pass: "Rh79wm3p", booked: false },
@@ -377,6 +379,27 @@
                 "20:30": { link: "https://teams.microsoft.com/meet/233211309709428?p=7jFXGuwJpPMLPN924b", id: "233 211 309 709 428", pass: "EN9xA7wq", booked: false }
             }
         };
+
+        // Función para cargar dinámicamente los horarios ocupados desde Google Sheets
+        async function syncBookedSlotsFromSheets() {
+            try {
+                const res = await fetch(GOOGLE_SCRIPT_URL);
+                const data = await res.json();
+                if (data.status === "success" && Array.isArray(data.bookedSlots)) {
+                    data.bookedSlots.forEach(slot => {
+                        if (scheduleDatabase[slot.date] && scheduleDatabase[slot.date][slot.time]) {
+                            scheduleDatabase[slot.date][slot.time].booked = true;
+                        }
+                    });
+                    renderTimeSlots();
+                }
+            } catch (err) {
+                console.warn("Error synchronizing schedule with Google Sheets:", err);
+            }
+        }
+
+        // Iniciar la sincronización inmediatamente al cargar
+        syncBookedSlotsFromSheets();
 
         let selectedDate = "";
         let selectedTime = "";
@@ -430,7 +453,7 @@
         userEmailInput.addEventListener('input', validateStep1Form);
         userPhoneInput.addEventListener('input', validateStep1Form);
 
-        // Generar y descargar la carta de invitación como Imagen con fecha dinámica
+        // Generar y descargar la carta de invitación como Imagen
         btnDownloadInv.onclick = () => {
             const nameVal = userNameInput.value.trim() || "Participant";
             document.getElementById('inv-participant-name').textContent = nameVal;
@@ -550,6 +573,7 @@
             sidebarStepTag.textContent = "Step 3";
             sidebarTitle.textContent = "Session Scheduling";
             sidebarDesc.textContent = "Choose your preferred date and available 30-minute time slot for the virtual interview via Microsoft Teams.";
+            syncBookedSlotsFromSheets(); // Resincronizar antes de mostrar horarios
         };
 
         btnBackStep2.onclick = () => {
@@ -563,16 +587,15 @@
             sidebarDesc.textContent = "Review research specifications, ethical standards, and download your formal invitation letter.";
         };
 
-        // Submit Booking & Send Email Notification via EmailJS
+        // Submit Booking (Google Sheets + EmailJS Notification)
         btnSubmit.onclick = async () => {
             if (!selectedDate || !selectedTime || !selectedMeetingInfo) return;
 
             btnSubmit.disabled = true;
             btnSubmit.innerHTML = `<span>Processing Booking...</span>`;
 
-            // Mark slot as booked in database and save to localStorage
+            // Marcar localmente para cambio visual inmediato
             scheduleDatabase[selectedDate][selectedTime].booked = true;
-            localStorage.setItem('doctoral_schedule_db', JSON.stringify(scheduleDatabase));
 
             const payload = {
                 participant_name: userNameInput.value.trim(),
@@ -586,7 +609,20 @@
                 notes: document.getElementById('user-notes').value.trim() || "No notes provided"
             };
 
-            // Envío de correos vía EmailJS
+            // 1. Guardar en Google Sheets
+            try {
+                await fetch(GOOGLE_SCRIPT_URL, {
+                    method: "POST",
+                    mode: "no-cors",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+                console.log("Recorded in Google Sheets successfully.");
+            } catch (err) {
+                console.warn("Google Sheets recording error:", err);
+            }
+
+            // 2. Envío de correo mediante EmailJS
             try {
                 emailjs.init(EMAILJS_CONFIG.publicKey);
                 await emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, payload);
@@ -595,7 +631,7 @@
                 console.warn("EmailJS sending error:", err);
             }
 
-            // Fill summary modal
+            // Llenar pantalla de confirmación
             document.getElementById('summary-datetime').textContent = `${selectedDate} at ${selectedTime} hrs`;
             document.getElementById('summary-name').textContent = payload.participant_name;
             document.getElementById('summary-email').textContent = payload.participant_email;
