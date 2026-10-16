@@ -335,7 +335,7 @@
         // =========================================================================
         // CONFIGURACIÓN DE APIS (GOOGLE SHEETS & EMAILJS)
         // =========================================================================
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzUFtA4FbEDjh3MX75dPuG5X-ALxkuKBaRDTH6PKRev5XueRGszV8OsgqKE-WoBWM2b_A/exec"; 
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzUFtA4FbEDjh3MX75dPuG5X-ALxkuKBaRDTH6PKRev5XueRGszV8OsgqKE-WoBWM2b_A/exec";
 
         const EMAILJS_CONFIG = {
             serviceId: "service_qyyrh2d",
@@ -380,23 +380,28 @@
             }
         };
 
-        // Función para cargar dinámicamente los horarios ocupados desde Google Sheets
-        async function syncBookedSlotsFromSheets() {
-            try {
-                const res = await fetch(GOOGLE_SCRIPT_URL);
-                const data = await res.json();
-                if (data.status === "success" && Array.isArray(data.bookedSlots)) {
-                    data.bookedSlots.forEach(slot => {
-                        if (scheduleDatabase[slot.date] && scheduleDatabase[slot.date][slot.time]) {
-                            scheduleDatabase[slot.date][slot.time].booked = true;
-                        }
-                    });
-                    renderTimeSlots();
+       // Función para cargar dinámicamente los horarios ocupados desde Google Sheets
+async function syncBookedSlotsFromSheets() {
+    try {
+        const res = await fetch(GOOGLE_SCRIPT_URL);
+        const data = await res.json();
+        console.log("Horarios ocupados recibidos desde Sheets:", data);
+        
+        if (data.status === "success" && Array.isArray(data.bookedSlots)) {
+            data.bookedSlots.forEach(slot => {
+                let cleanDate = String(slot.date).trim();
+                let cleanTime = String(slot.time).trim();
+
+                if (scheduleDatabase[cleanDate] && scheduleDatabase[cleanDate][cleanTime]) {
+                    scheduleDatabase[cleanDate][cleanTime].booked = true;
                 }
-            } catch (err) {
-                console.warn("Error synchronizing schedule with Google Sheets:", err);
-            }
+            });
+            renderTimeSlots();
         }
+    } catch (err) {
+        console.warn("Error synchronizing schedule with Google Sheets:", err);
+    }
+}
 
         // Iniciar la sincronización inmediatamente al cargar
         syncBookedSlotsFromSheets();
