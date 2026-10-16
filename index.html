@@ -380,60 +380,38 @@
             }
         };
 
-        // Normaliza cualquier formato de fecha a "YYYY-MM-DD"
-        function normalizeDateStr(dateStr) {
-            if (!dateStr) return "";
-            let str = String(dateStr).trim();
-            if (str.includes("T")) str = str.split("T")[0];
+        // Función Callback JSONP que procesa los datos sin bloqueos
+        window.handleSheetsData = function(data) {
+            if (data && data.status === "success" && Array.isArray(data.bookedSlots)) {
+                data.bookedSlots.forEach(slot => {
+                    let cleanDate = String(slot.date).trim();
+                    let cleanTime = String(slot.time).trim();
 
-            // Formato DD/MM/YYYY o DD-MM-YYYY
-            if (str.includes("/") || (str.includes("-") && str.split("-")[0].length !== 4)) {
-                const parts = str.split(/[\/\-]/);
-                if (parts.length === 3) {
-                    let day = parts[0].padStart(2, '0');
-                    let month = parts[1].padStart(2, '0');
-                    let year = parts[2];
-                    if (year.length === 2) year = "20" + year;
-                    return `${year}-${month}-${day}`;
-                }
+                    if (scheduleDatabase[cleanDate]) {
+                        Object.keys(scheduleDatabase[cleanDate]).forEach(dbTime => {
+                            const normDb = dbTime.replace(/^0/, '');
+                            const normClean = cleanTime.replace(/^0/, '');
+                            if (dbTime === cleanTime || normDb === normClean) {
+                                scheduleDatabase[cleanDate][dbTime].booked = true;
+                            }
+                        });
+                    }
+                });
             }
-            return str;
+            renderTimeSlots();
+        };
+
+        // Solicitar datos vía JSONP
+        function syncBookedSlotsFromSheets() {
+            const old = document.getElementById('jsonp-script');
+            if (old) old.remove();
+
+            const script = document.createElement('script');
+            script.id = 'jsonp-script';
+            script.src = `${GOOGLE_SCRIPT_URL}?callback=handleSheetsData&t=${Date.now()}`;
+            document.body.appendChild(script);
         }
 
-        // Función para cargar dinámicamente los horarios ocupados desde Google Sheets
-        async function syncBookedSlotsFromSheets() {
-            try {
-                const res = await fetch(GOOGLE_SCRIPT_URL, { redirect: "follow" });
-                const data = await res.json();
-                
-                if (data && data.status === "success" && Array.isArray(data.bookedSlots)) {
-                    data.bookedSlots.forEach(slot => {
-                        let cleanDate = normalizeDateStr(slot.date);
-                        let cleanTime = String(slot.time).trim();
-
-                        if (cleanTime.length === 4 && cleanTime.includes(":")) cleanTime = "0" + cleanTime;
-
-                        // Marcar en la base de datos
-                        if (scheduleDatabase[cleanDate]) {
-                            Object.keys(scheduleDatabase[cleanDate]).forEach(dbTime => {
-                                const normDbTime = dbTime.replace(/^0/, '');
-                                const normCleanTime = cleanTime.replace(/^0/, '');
-
-                                if (dbTime === cleanTime || normDbTime === normCleanTime) {
-                                    scheduleDatabase[cleanDate][dbTime].booked = true;
-                                }
-                            });
-                        }
-                    });
-                }
-            } catch (err) {
-                console.warn("Error synchronizing schedule with Google Sheets:", err);
-            } finally {
-                renderTimeSlots();
-            }
-        }
-
-        // Iniciar la sincronización inmediatamente al cargar
         syncBookedSlotsFromSheets();
 
         let selectedDate = "";
@@ -520,7 +498,7 @@
             });
         };
 
-        // Renderizado: OMITIR por completo los horarios agendados para evitar empalmes
+        // Pinta únicamente los horarios disponibles (elimina los ocupados)
         function renderTimeSlots() {
             timeSlotsContainer.innerHTML = "";
             
@@ -530,10 +508,9 @@
             }
 
             const allSlots = Object.keys(scheduleDatabase[selectedDate]);
-            // Filtrar únicamente los horarios verdaderamente disponibles
             const freeSlots = allSlots.filter(time => !scheduleDatabase[selectedDate][time].booked);
 
-            // Leyenda en caso de que la fecha ya no tenga horarios disponibles
+            // Mensaje si no quedan horas libres en la fecha elegida
             if (freeSlots.length === 0) {
                 timeSlotsContainer.innerHTML = `<div class="col-span-2 text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-xl p-4 text-center font-medium">
                     This date is fully booked and no longer available for new reservations. Please select another date.
@@ -541,7 +518,7 @@
                 return;
             }
 
-            // Mostrar únicamente las horas disponibles (las ocupadas desaparecen)
+            // Omitir completamente los botones de horas reservadas
             freeSlots.forEach(time => {
                 const slotData = scheduleDatabase[selectedDate][time];
                 const btn = document.createElement('button');
@@ -565,11 +542,11 @@
             lucide.createIcons();
         }
 
-        dateInput.addEventListener('change', async (e) => {
+        dateInput.addEventListener('change', (e) => {
             selectedDate = e.target.value;
             selectedTime = "";
             selectedMeetingInfo = null;
-            await syncBookedSlotsFromSheets();
+            syncBookedSlotsFromSheets();
             validateStep3();
         });
 
@@ -606,7 +583,7 @@
             sidebarDesc.textContent = "Please provide your contact information to begin the scheduling process for the doctoral research interview.";
         };
 
-        btnToStep3.onclick = async () => {
+        btnToStep3.onclick = () => {
             step2.classList.add('hidden');
             step3.classList.remove('hidden');
             stepNum.textContent = "3";
@@ -615,7 +592,7 @@
             sidebarStepTag.textContent = "Step 3";
             sidebarTitle.textContent = "Session Scheduling";
             sidebarDesc.textContent = "Choose your preferred date and available 30-minute time slot for the virtual interview via Microsoft Teams.";
-            await syncBookedSlotsFromSheets();
+            syncBookedSlotsFromSheets();
         };
 
         btnBackStep2.onclick = () => {
@@ -650,13 +627,16 @@
                 notes: document.getElementById('user-notes').value.trim() || "No notes provided"
             };
 
-            // 1. Guardar en Google Sheets
+            // 1. Guardar en Google Sheets usando form data URL encoded
             try {
+                const formData = new URLSearchParams();
+                Object.keys(payload).forEach(key => formData.append(key, payload[key]));
+
                 await fetch(GOOGLE_SCRIPT_URL, {
                     method: "POST",
                     mode: "no-cors",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(payload)
+                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                    body: formData.toString()
                 });
             } catch (err) {
                 console.warn("Google Sheets recording error:", err);
