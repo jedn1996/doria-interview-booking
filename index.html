@@ -392,12 +392,12 @@ async function syncBookedSlotsFromSheets() {
                 let cleanDate = String(slot.date).trim();
                 let cleanTime = String(slot.time).trim();
 
-                // Normalizar la fecha por si viene con formato T de ISO
+                // Normalizar fecha por si contiene formato ISO
                 if (cleanDate.includes("T")) {
                     cleanDate = cleanDate.split("T")[0];
                 }
 
-                // Normalizar la hora por si viene sin cero inicial (ej. "9:00" -> "09:00")
+                // Normalizar hora para asegurar cero inicial (ej. "9:00" -> "09:00")
                 if (cleanTime.length === 4 && cleanTime.includes(":")) {
                     cleanTime = "0" + cleanTime;
                 }
@@ -406,8 +406,11 @@ async function syncBookedSlotsFromSheets() {
                     scheduleDatabase[cleanDate][cleanTime].booked = true;
                 }
             });
-            // Volver a renderizar las horas para reflejar los bloqueos
-            renderTimeSlots();
+            
+            // Re-renderizar slots si el usuario ya tiene una fecha seleccionada
+            if (selectedDate) {
+                renderTimeSlots();
+            }
         }
     } catch (err) {
         console.warn("Error synchronizing schedule with Google Sheets:", err);
@@ -539,13 +542,19 @@ async function syncBookedSlotsFromSheets() {
             lucide.createIcons();
         }
 
-        dateInput.addEventListener('change', (e) => {
-            selectedDate = e.target.value;
-            selectedTime = "";
-            selectedMeetingInfo = null;
-            renderTimeSlots();
-            validateStep3();
-        });
+dateInput.addEventListener('change', async (e) => {
+    selectedDate = e.target.value;
+    selectedTime = "";
+    selectedMeetingInfo = null;
+    
+    // Primero renderiza el estado previo mientras consulta la nube
+    renderTimeSlots();
+    
+    // Consulta a Google Sheets y bloquea de inmediato si hay reservas nuevas
+    await syncBookedSlotsFromSheets();
+    
+    validateStep3();
+});
 
         function validateStep3() {
             if (selectedDate && selectedTime && selectedMeetingInfo && !selectedMeetingInfo.booked) {
