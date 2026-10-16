@@ -380,44 +380,36 @@
             }
         };
 
-// Función para cargar dinámicamente los horarios ocupados desde Google Sheets
-async function syncBookedSlotsFromSheets() {
-    try {
-        const res = await fetch(GOOGLE_SCRIPT_URL);
-        const data = await res.json();
-        console.log("Horarios ocupados recibidos desde Sheets:", data);
-        
-        if (data.status === "success" && Array.isArray(data.bookedSlots)) {
-            data.bookedSlots.forEach(slot => {
-                let cleanDate = String(slot.date).trim();
-                let cleanTime = String(slot.time).trim();
+        // Función Callback de JSONP para recibir datos sin bloqueo de CORS
+        window.handleSheetsData = function(data) {
+            if (data && data.status === "success" && Array.isArray(data.bookedSlots)) {
+                data.bookedSlots.forEach(slot => {
+                    let cleanDate = String(slot.date).trim();
+                    let cleanTime = String(slot.time).trim();
 
-                // Normalizar fecha por si contiene formato ISO
-                if (cleanDate.includes("T")) {
-                    cleanDate = cleanDate.split("T")[0];
-                }
+                    if (cleanDate.includes("T")) cleanDate = cleanDate.split("T")[0];
+                    if (cleanTime.length === 4 && cleanTime.includes(":")) cleanTime = "0" + cleanTime;
 
-                // Normalizar hora para asegurar cero inicial (ej. "9:00" -> "09:00")
-                if (cleanTime.length === 4 && cleanTime.includes(":")) {
-                    cleanTime = "0" + cleanTime;
-                }
-
-                if (scheduleDatabase[cleanDate] && scheduleDatabase[cleanDate][cleanTime]) {
-                    scheduleDatabase[cleanDate][cleanTime].booked = true;
-                }
-            });
-            
-            // Re-renderizar slots si el usuario ya tiene una fecha seleccionada
-            if (selectedDate) {
+                    if (scheduleDatabase[cleanDate] && scheduleDatabase[cleanDate][cleanTime]) {
+                        scheduleDatabase[cleanDate][cleanTime].booked = true;
+                    }
+                });
                 renderTimeSlots();
             }
-        }
-    } catch (err) {
-        console.warn("Error synchronizing schedule with Google Sheets:", err);
-    }
-}
+        };
 
-        // Iniciar la sincronización inmediatamente al cargar
+        // Cargar datos vía inyección JSONP
+        function syncBookedSlotsFromSheets() {
+            const oldScript = document.getElementById('jsonp-sheets-script');
+            if (oldScript) oldScript.remove();
+
+            const script = document.createElement('script');
+            script.id = 'jsonp-sheets-script';
+            script.src = `${GOOGLE_SCRIPT_URL}?callback=handleSheetsData&t=${Date.now()}`;
+            document.body.appendChild(script);
+        }
+
+        // Sincronización inicial
         syncBookedSlotsFromSheets();
 
         let selectedDate = "";
@@ -513,6 +505,21 @@ async function syncBookedSlotsFromSheets() {
             }
 
             const availableSlots = Object.keys(scheduleDatabase[selectedDate]);
+            let availableCount = 0;
+
+            availableSlots.forEach(time => {
+                const slotData = scheduleDatabase[selectedDate][time];
+                if (!slotData.booked) availableCount++;
+            });
+
+            // Leyenda en caso de que la fecha seleccionada no tenga horarios disponibles
+            if (availableCount === 0) {
+                timeSlotsContainer.innerHTML = `<div class="col-span-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-xl p-4 text-center font-medium">
+                    This date is fully booked and no longer available for new reservations. Please select another date.
+                </div>`;
+                return;
+            }
+
             availableSlots.forEach(time => {
                 const slotData = scheduleDatabase[selectedDate][time];
                 const btn = document.createElement('button');
@@ -522,7 +529,7 @@ async function syncBookedSlotsFromSheets() {
                 if (slotData.booked) {
                     btn.disabled = true;
                     btn.className = "p-3 rounded-xl border border-slate-200 bg-slate-100 text-slate-400 text-xs font-semibold text-center flex items-center justify-center gap-2 cursor-not-allowed line-through opacity-60";
-                    btn.innerHTML = `<i data-lucide="lock" class="w-3.5 h-3.5 text-slate-400"></i> ${time} hrs (Booked)`;
+                    btn.innerHTML = `<i data-lucide="lock" class="w-3.5 h-3.5 text-slate-400"></i> ${time} hrs (Unavailable)`;
                 } else {
                     btn.className = `p-3 rounded-xl border text-xs font-semibold transition text-center flex items-center justify-center gap-2 cursor-pointer ${
                         isSelected 
@@ -542,19 +549,13 @@ async function syncBookedSlotsFromSheets() {
             lucide.createIcons();
         }
 
-dateInput.addEventListener('change', async (e) => {
-    selectedDate = e.target.value;
-    selectedTime = "";
-    selectedMeetingInfo = null;
-    
-    // Primero renderiza el estado previo mientras consulta la nube
-    renderTimeSlots();
-    
-    // Consulta a Google Sheets y bloquea de inmediato si hay reservas nuevas
-    await syncBookedSlotsFromSheets();
-    
-    validateStep3();
-});
+        dateInput.addEventListener('change', (e) => {
+            selectedDate = e.target.value;
+            selectedTime = "";
+            selectedMeetingInfo = null;
+            syncBookedSlotsFromSheets();
+            validateStep3();
+        });
 
         function validateStep3() {
             if (selectedDate && selectedTime && selectedMeetingInfo && !selectedMeetingInfo.booked) {
@@ -589,19 +590,17 @@ dateInput.addEventListener('change', async (e) => {
             sidebarDesc.textContent = "Please provide your contact information to begin the scheduling process for the doctoral research interview.";
         };
 
-btnToStep3.onclick = async () => {
-    step2.classList.add('hidden');
-    step3.classList.remove('hidden');
-    stepNum.textContent = "3";
-    stepTitle.textContent = "Select Date & Time";
-    stepSub.textContent = "Step 3 of 3";
-    sidebarStepTag.textContent = "Step 3";
-    sidebarTitle.textContent = "Session Scheduling";
-    sidebarDesc.textContent = "Choose your preferred date and available 30-minute time slot for the virtual interview via Microsoft Teams.";
-    
-    // Sincronizar y renderizar las horas ocupadas al entrar a este paso
-    await syncBookedSlotsFromSheets();
-};
+        btnToStep3.onclick = () => {
+            step2.classList.add('hidden');
+            step3.classList.remove('hidden');
+            stepNum.textContent = "3";
+            stepTitle.textContent = "Select Date & Time";
+            stepSub.textContent = "Step 3 of 3";
+            sidebarStepTag.textContent = "Step 3";
+            sidebarTitle.textContent = "Session Scheduling";
+            sidebarDesc.textContent = "Choose your preferred date and available 30-minute time slot for the virtual interview via Microsoft Teams.";
+            syncBookedSlotsFromSheets();
+        };
 
         btnBackStep2.onclick = () => {
             step3.classList.add('hidden');
@@ -621,7 +620,6 @@ btnToStep3.onclick = async () => {
             btnSubmit.disabled = true;
             btnSubmit.innerHTML = `<span>Processing Booking...</span>`;
 
-            // Marcar localmente para cambio visual inmediato
             scheduleDatabase[selectedDate][selectedTime].booked = true;
 
             const payload = {
@@ -644,7 +642,6 @@ btnToStep3.onclick = async () => {
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(payload)
                 });
-                console.log("Recorded in Google Sheets successfully.");
             } catch (err) {
                 console.warn("Google Sheets recording error:", err);
             }
@@ -653,7 +650,6 @@ btnToStep3.onclick = async () => {
             try {
                 emailjs.init(EMAILJS_CONFIG.publicKey);
                 await emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, payload);
-                console.log("Email sent successfully via EmailJS.");
             } catch (err) {
                 console.warn("EmailJS sending error:", err);
             }
