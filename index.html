@@ -380,30 +380,32 @@
             }
         };
 
-        // Función con redirección directa habilitada
-        async function syncBookedSlotsFromSheets() {
-            try {
-                const res = await fetch(GOOGLE_SCRIPT_URL, { redirect: "follow" });
-                const data = await res.json();
-                
-                if (data && data.status === "success" && Array.isArray(data.bookedSlots)) {
-                    data.bookedSlots.forEach(slot => {
-                        let cleanDate = String(slot.date).trim();
-                        let cleanTime = String(slot.time).trim();
+// Función para cargar dinámicamente los horarios ocupados desde Google Sheets
+async function syncBookedSlotsFromSheets() {
+    try {
+        const res = await fetch(GOOGLE_SCRIPT_URL, { redirect: "follow" });
+        const data = await res.json();
+        
+        if (data && data.status === "success" && Array.isArray(data.bookedSlots)) {
+            data.bookedSlots.forEach(slot => {
+                let cleanDate = String(slot.date).trim();
+                let cleanTime = String(slot.time).trim();
 
-                        if (cleanDate.includes("T")) cleanDate = cleanDate.split("T")[0];
-                        if (cleanTime.length === 4 && cleanTime.includes(":")) cleanTime = "0" + cleanTime;
+                if (cleanDate.includes("T")) cleanDate = cleanDate.split("T")[0];
+                if (cleanTime.length === 4 && cleanTime.includes(":")) cleanTime = "0" + cleanTime;
 
-                        if (scheduleDatabase[cleanDate] && scheduleDatabase[cleanDate][cleanTime]) {
-                            scheduleDatabase[cleanDate][cleanTime].booked = true;
-                        }
-                    });
-                    renderTimeSlots();
+                if (scheduleDatabase[cleanDate] && scheduleDatabase[cleanDate][cleanTime]) {
+                    scheduleDatabase[cleanDate][cleanTime].booked = true;
                 }
-            } catch (err) {
-                console.warn("Error synchronizing schedule with Google Sheets:", err);
-            }
+            });
         }
+    } catch (err) {
+        console.warn("Error synchronizing schedule with Google Sheets:", err);
+    } finally {
+        // OBLIGATORIO: Dibujar siempre las horas en pantalla, hayan o no datos
+        renderTimeSlots();
+    }
+}
 
         // Sincronizar inmediatamente al cargar
         syncBookedSlotsFromSheets();
